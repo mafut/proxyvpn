@@ -190,7 +190,6 @@ EOF
     cp -f ${CONFIG} /etc/ufw/before.filter.rules
     cat /etc/ufw/before.nat.rules /etc/ufw/before.filter.rules > ${CONFIG}
     
-    # Enable Firewall
     ufw enable
     
     # [vpn] Setup PPTP
@@ -252,9 +251,9 @@ EOF
 }
 
 
-if [ $# = 2 ] && [ $1 = "proxy" ];
+if [ $# = 3 ] && [ $1 = "proxy" ];
 then
-    setup_proxy $2
+    setup_proxy $2 $3
     exit 0
 fi
 
@@ -266,7 +265,7 @@ fi
 
 cat << EOF
 [Usage]
-setup_ubuntu18.sh proxy [password]
+setup_ubuntu18.sh proxy [password] [allowed host]
 setup_ubuntu18.sh vpn [password]
 EOF
 exit 0

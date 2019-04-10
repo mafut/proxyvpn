@@ -103,40 +103,81 @@ EOF
 }
 
 function setup_vpn(){
-    # Initialize variables
-    PASS=$1
+# Initialize variables
+    PASS=$2
     if [ -z "${PASS}" ];
     then
         echo "Can't get password"
         exit 1
     fi
-    
+
     # Stop Services at the first
     systemctl stop pptpd
-    
+
     # yum update/upgrade
     yum clean all
     yum update
-    
+
     # Install packages
-    yum -y install gcc make binutils libc-devel zlib-devel openssl-devel readline-devel ncurses-devel pthread-devel wget
-    
-    # Setup SoftEther
-    SOFTETHER=softether-vpnserver-v4.25-9656-rtm-2018.01.15-linux-x64-64bit.tar.gz
-    tar xzf ${SOFTETHER}
-    cd vpnserver/
-    make
-    
-    mv /tmp/vpnserver /usr/local
-    cd /usr/local/vpnserver/
-    chmod 600 *
-    chmod 700 vpncmd
-    chmod 700 vpnserver
+    yum -y install ppp pptpd
+
+    # [vpn] Setup PPTP
+    CONFIG=/etc/pptpd.conf
+    cp -f ${CONFIG} ${CONFIG}.bak
+    cat << EOF > ${CONFIG}
+option /etc/ppp/pptpd-options
+localip 192.169.1.1
+remoteip 192.168.1.100-200
+EOF
+
+    CONFIG=/etc/ppp/pptpd-options
+    cp -f ${CONFIG} ${CONFIG}.bak
+    cat << EOF > ${CONFIG}
+name pptpd
+refuse-pap
+refuse-chap
+refuse-mschap
+require-mschap-v2
+require-mppe-128
+proxyarp
+lock
+nobsdcomp
+novj
+novjccomp
+nologfd
+
+ms-dns 8.8.8.8
+ms-dns 8.8.4.4
+
+mtu 1400
+EOF
+
+    CONFIG=/etc/ppp/chap-secrets
+    cp -f ${CONFIG} ${CONFIG}.bak
+    cat << EOF > ${CONFIG}
+vpn pptpd "${PASS}" *
+EOF
+
+    CONFIG=/usr/lib/sysctl.d/50-default.conf
+    cp -f ${CONFIG} ${CONFIG}.bak
+    if ! grep -q 'net.ipv4.ip_forward' ${CONFIG};
+    then
+        cat << EOF >> ${CONFIG}
+net.ipv4.ip_forward = 1
+net.ipv4.conf.all.send_redirects = 0
+net.ipv4.conf.all.accept_redirects = 0
+EOF
+    fi
+    sysctl -p
+
+    # Add Auto startup and Start service
+    systemctl enable pptpd
+    systemctl start pptpd
 }
 
-if [ $# = 2 ] && [ $1 = "proxy" ];
+if [ $# = 3 ] && [ $1 = "proxy" ];
 then
-    setup_proxy $2
+    setup_proxy $2 $3
     exit 0
 fi
 
