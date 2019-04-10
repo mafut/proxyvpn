@@ -151,7 +151,7 @@ function setup_vpn(){
     fi
     
     # Stop Services at the first
-    service pptpd stop
+    systemctl stop pptpd
     
     # APT update/upgrade
     apt-get -y update
@@ -229,25 +229,21 @@ EOF
 vpn pptpd "${PASS}" *
 EOF
     
-    CONFIG=/etc/sysctl.conf
+    CONFIG=/usr/lib/sysctl.d/50-default.conf
     cp -f ${CONFIG} ${CONFIG}.bak
-    sh -c "sed \"s|#net.ipv4.ip_forward|net.ipv4.ip_forward|g\" ${CONFIG}.bak > ${CONFIG}"
-    CONFIG=/etc/ufw/sysctl.conf
-    cp -f ${CONFIG} ${CONFIG}.bak
-    sh -c "sed \"s|#net/ipv4/ip_forward=1|net/ipv4/ip_forward=1|g\" ${CONFIG}.bak > ${CONFIG}"
+    if ! grep -q 'net.ipv4.ip_forward' ${CONFIG};
+    then
+        cat << EOF >> ${CONFIG}
+net.ipv4.ip_forward = 1
+net.ipv4.conf.all.send_redirects = 0
+net.ipv4.conf.all.accept_redirects = 0
+EOF
+    fi
     sysctl -p
     
-    # Add auto-start
-    sysv-rc-conf pptpd on
-    CONFIG=/etc/rc.local
-    cp -f ${CONFIG} ${CONFIG}.bak
-    if ! grep -q 'service pptpd start' ${CONFIG};
-    then
-        sh -c "sed \"s|exit 0|service pptpd start\nexit 0|g\" ${CONFIG}.bak > ${CONFIG}"
-    fi
-    
-    # Start service
-    service pptpd start
+    # Add Auto startup and Start service
+    systemctl enable pptpd
+    systemctl start pptpd
 }
 
 

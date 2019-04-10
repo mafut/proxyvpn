@@ -104,7 +104,7 @@ EOF
 
 function setup_vpn(){
 # Initialize variables
-    PASS=$2
+    PASS=$1
     if [ -z "${PASS}" ];
     then
         echo "Can't get password"
