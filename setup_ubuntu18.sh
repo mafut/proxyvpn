@@ -24,7 +24,7 @@ function setup_proxy(){
     apt-get -y upgrade
     
     # Install packages
-    apt-get -y install sysv-rc-conf ufw
+    apt-get -y install ufw
     apt-get -y install squid
     apt-get -y install apache2-utils
     
@@ -58,6 +58,9 @@ EOF
     cat /etc/ufw/before.nat.rules /etc/ufw/before.filter.rules > ${CONFIG}
     
     ufw enable
+    
+    # Create .htpasswd
+    htpasswd -b -c /etc/squid/.htpasswd proxy ${PASS}
     
     # [Proxy] Setup squid
     HOMEIP=$(getent hosts ${HOMENETWORK} | awk '{print $1}')
@@ -115,7 +118,7 @@ request_header_access Cache-Control deny all
 
 visible_hostname unknown
 
-auth_param basic program /usr/lib64/squid/basic_ncsa_auth /etc/squid/.htpasswd
+auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/.htpasswd
 auth_param basic children 5
 auth_param basic realm Squid Basic Authentication
 auth_param basic credentialsttl 24 hours
@@ -124,9 +127,6 @@ acl password proxy_auth REQUIRED
 http_access allow password
 http_access deny all
 EOF
-    
-    # Create .htpasswd
-    htpasswd -b -c /etc/squid/.htpasswd proxy ${PASS}
     
     # Add Auto startup and Start service
     systemctl enable squid
@@ -150,7 +150,7 @@ function setup_vpn(){
     apt-get -y upgrade
     
     # Install packages
-    apt-get -y install sysv-rc-conf ufw
+    apt-get -y install ufw
     apt-get -y install pptpd
     
     # Reset Firewall

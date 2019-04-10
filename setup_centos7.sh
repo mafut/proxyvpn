@@ -28,6 +28,9 @@ function setup_proxy(){
     yum -y install httpd-tools
     yum -y install bind-utils
     
+    # Create .htpasswd
+    htpasswd -b -c /etc/squid/.htpasswd proxy ${PASS}
+    
     # [Proxy] Setup squid
     HOMEIP=$(getent hosts ${HOMENETWORK} | awk '{print $1}')
     CONFIG=/etc/squid/squid.conf
@@ -94,33 +97,30 @@ http_access allow password
 http_access deny all
 EOF
     
-    # Create .htpasswd
-    htpasswd -b -c /etc/squid/.htpasswd proxy ${PASS}
-    
     # Add Auto startup and Start service
     systemctl enable squid
     systemctl start squid
 }
 
 function setup_vpn(){
-# Initialize variables
+    # Initialize variables
     PASS=$1
     if [ -z "${PASS}" ];
     then
         echo "Can't get password"
         exit 1
     fi
-
+    
     # Stop Services at the first
     systemctl stop pptpd
-
+    
     # yum update/upgrade
     yum clean all
     yum update
-
+    
     # Install packages
     yum -y install ppp pptpd
-
+    
     # [vpn] Setup PPTP
     CONFIG=/etc/pptpd.conf
     cp -f ${CONFIG} ${CONFIG}.bak
@@ -129,7 +129,7 @@ option /etc/ppp/pptpd-options
 localip 192.169.1.1
 remoteip 192.168.1.100-200
 EOF
-
+    
     CONFIG=/etc/ppp/pptpd-options
     cp -f ${CONFIG} ${CONFIG}.bak
     cat << EOF > ${CONFIG}
@@ -151,13 +151,13 @@ ms-dns 8.8.4.4
 
 mtu 1400
 EOF
-
+    
     CONFIG=/etc/ppp/chap-secrets
     cp -f ${CONFIG} ${CONFIG}.bak
     cat << EOF > ${CONFIG}
 vpn pptpd "${PASS}" *
 EOF
-
+    
     CONFIG=/usr/lib/sysctl.d/50-default.conf
     cp -f ${CONFIG} ${CONFIG}.bak
     if ! grep -q 'net.ipv4.ip_forward' ${CONFIG};
@@ -169,7 +169,7 @@ net.ipv4.conf.all.accept_redirects = 0
 EOF
     fi
     sysctl -p
-
+    
     # Add Auto startup and Start service
     systemctl enable pptpd
     systemctl start pptpd
