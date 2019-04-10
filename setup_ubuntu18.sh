@@ -17,7 +17,7 @@ function setup_proxy(){
     fi
     
     # Stop Services at the first
-    service squid stop
+    systemctl stop squid
     
     # APT update/upgrade
     apt-get -y update
@@ -128,17 +128,9 @@ EOF
     # Create .htpasswd
     htpasswd -b -c /etc/squid/.htpasswd proxy ${PASS}
     
-    # Add auto-start
-    sysv-rc-conf squid on
-    CONFIG=/etc/rc.local
-    cp -f ${CONFIG} ${CONFIG}.bak
-    if ! grep -q 'service squid start' ${CONFIG};
-    then
-        sh -c "sed \"s|exit 0|service squid start\nexit 0|g\" ${CONFIG}.bak > ${CONFIG}"
-    fi
-    
-    # Start service
-    service squid start
+    # Add Auto startup and Start service
+    systemctl enable squid
+    systemctl start squid
 }
 
 function setup_vpn(){
