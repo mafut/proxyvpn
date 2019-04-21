@@ -20,17 +20,17 @@ function setup_proxy(){
     systemctl stop squid
     
     # APT update/upgrade
-    apt-get -y update
-    apt-get -y upgrade
+    apt-get -y --force-yes update
+    apt-get -y --force-yes upgrade
     
     # Install packages
-    apt-get -y install ufw
-    apt-get -y install squid
-    apt-get -y install apache2-utils
+    apt-get -y --force-yes install ufw
+    apt-get -y --force-yes install squid
+    apt-get -y --force-yes install apache2-utils
     
     # Setup Firewall
     ufw disable
-    ufw reset
+    ufw --force reset
     ufw default deny
     ufw allow 22
     ufw allow 80
