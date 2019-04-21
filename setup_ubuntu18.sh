@@ -57,7 +57,7 @@ EOF
     cp -f ${CONFIG} /etc/ufw/before.filter.rules
     cat /etc/ufw/before.nat.rules /etc/ufw/before.filter.rules > ${CONFIG}
     
-    ufw enable
+    ufw --force enable
     
     # Create .htpasswd
     htpasswd -b -c /etc/squid/.htpasswd proxy ${PASS}
