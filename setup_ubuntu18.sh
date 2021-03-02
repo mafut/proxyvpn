@@ -131,6 +131,7 @@ EOF
     # Add Auto startup and Start service
     systemctl enable squid
     systemctl start squid
+    systemctl restart squid
 }
 
 function setup_vpn(){
@@ -236,6 +237,7 @@ EOF
     # Add Auto startup and Start service
     systemctl enable pptpd
     systemctl start pptpd
+    systemctl restart pptpd
 }
 
 
