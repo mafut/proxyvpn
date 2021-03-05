@@ -130,7 +130,6 @@ EOF
     
     # Add Auto startup and Start service
     systemctl enable squid
-    systemctl start squid
     systemctl restart squid
 }
 
